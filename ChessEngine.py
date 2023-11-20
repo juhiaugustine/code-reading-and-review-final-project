@@ -1,6 +1,9 @@
 
 class GameState: 
-        
+
+        # Constructor for GameState class. This comprises of the different moves of different 
+        # pieces and also the board is initiazed to the initial state while having the white
+        # side to move first.
         def __init__(self):
                 self.board = [
                         ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
@@ -19,7 +22,8 @@ class GameState:
                 self.blackKingLocation = (0, 4)
                 self.checkMate = False
                 self.staleMate = False
-
+        
+        # Used to move a piece from [startRow, startCol] to [endRow, endCol]
         def makeMove(self, move):
                 self.board[move.startRow][move.startCol] = "--"
                 self.board[move.endRow][move.endCol] = move.pieceMoved
@@ -33,7 +37,7 @@ class GameState:
                 if move.isPawnPromotion:
                         self.board[move.endRow][move.endCol] = move.pieceMoved[0] + "Q"
 
-
+        # Used to undo a move made by the player
         def undoMove(self):
                 if len(self.moveLog) != 0:
                         move = self.moveLog.pop()
@@ -44,9 +48,8 @@ class GameState:
                                 self.whiteKingLocation = (move.startRow, move.startCol)
                         if move.pieceMoved == "bK":
                                 self.blackKingLocation = (move.startRow, move.startCol)
-        """
-        All move considering checks
-        """
+        
+        # Used to get all valid moves for the current player and also validates to see if the game is at a CheckMate/Stalemate state.
         def getValidMoves(self):
                 moves = self.getAllPossibleMoves()
                 for i in range(len(moves)-1, -1, -1):
@@ -82,12 +85,7 @@ class GameState:
                                 return True
                 return False
 
-
-
-
-        """
-        All move without considering checks
-        """
+        # Used to get all possible moves
         def getAllPossibleMoves(self):
                 moves = []
                 for r in range(len(self.board)):
@@ -98,7 +96,7 @@ class GameState:
                                         self.moveFunctions[piece](r,c, moves)
                 return moves
 
-
+        # Used to get all pawn moves
         def getPawnMoves(self, r, c, moves):
                 if self.whiteToMove:
                         if self.board[r-1][c] == "--":
@@ -124,6 +122,7 @@ class GameState:
                                 if self.board[r+1][c+1][0] == 'w':
                                         moves.append(Move((r, c),(r+1, c+1), self.board))
 
+        # Used to get all Rook moves
         def getRookMoves(self, r, c, moves):
                 directions = ((-1, 0), (0, -1), (1, 0), (0, 1))
                 enemyColor = "b" if self.whiteToMove else "w"
@@ -143,6 +142,7 @@ class GameState:
                                 else:
                                         break
 
+        # Used to get all Knight moves
         def getKnightMoves(self, r,c,moves):
                 knightMoves = ((-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2,1))
                 allyColor = "w" if self.whiteToMove else "b"
@@ -154,6 +154,7 @@ class GameState:
                                 if endPiece[0] != allyColor:
                                         moves.append(Move((r,c), (endRow, endCol), self.board))
 
+        # Used to get all Bishop moves
         def getBishopMoves(self, r,c,moves):
                 directions = ((-1, -1), (-1, 1), (1, -1), (1, 1))
                 enemyColor = "b" if self.whiteToMove else "w"
@@ -173,10 +174,12 @@ class GameState:
                                 else:
                                         break
 
+        # Used to get all Queen moves
         def getQueenMoves(self, r,c,moves):
                 self.getRookMoves(r, c, moves)
                 self.getBishopMoves(r, c, moves)
 
+        # Used to get all King moves
         def getKingMoves(self, r,c,moves):
                 kingMoves = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1,1) )
                 allyColor = "w" if self.whiteToMove else "b"

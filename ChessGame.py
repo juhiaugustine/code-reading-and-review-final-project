@@ -36,7 +36,7 @@ class ChessGame:
         for piece in pieces:
             self.IMAGES[piece] = p.transform.scale(p.image.load("images/" + piece + ".png"), (self.SQ_SIZE, self.SQ_SIZE))
 
-    def drawBoard(self, screen):
+    def drawChessboard(self, screen):
         """
         Draws the chessboard on the screen.
 
@@ -51,7 +51,7 @@ class ChessGame:
                 color = self.colors[(r + c) % 2]
                 p.draw.rect(screen, color, p.Rect(c * self.SQ_SIZE, r * self.SQ_SIZE, self.SQ_SIZE, self.SQ_SIZE))
 
-    def drawPieces(self, screen, board):
+    def drawChessPieces(self, screen, board):
         """
         Draws the chess pieces on the screen.
 
@@ -68,7 +68,7 @@ class ChessGame:
                 if piece != "--":
                     screen.blit(self.IMAGES[piece], p.Rect(c * self.SQ_SIZE, r * self.SQ_SIZE, self.SQ_SIZE, self.SQ_SIZE))
 
-    def highlightSquares(self, screen, gs, validMoves, sqSelected):
+    def highlightSquares(self, screen, gs, validMoves, selectedSquare):
         """
         Highlights the selected square and valid move squares on the screen.
 
@@ -76,13 +76,13 @@ class ChessGame:
         - screen: The Pygame screen object.
         - gs: The current game state.
         - validMoves: A list of valid moves.
-        - sqSelected: The selected square.
+        - selectedSquare: The selected square.
 
         Returns:
         None
         """
-        if sqSelected != ():
-            r, c = sqSelected
+        if selectedSquare != ():
+            r, c = selectedSquare
             if gs.board[r][c][0] == ('w' if gs.whiteToMove else 'b'):
                 s = p.Surface((self.SQ_SIZE, self.SQ_SIZE))
                 s.set_alpha(100)
@@ -93,7 +93,7 @@ class ChessGame:
                     if moves.startRow == r and moves.startCol == c:
                         screen.blit(s, (self.SQ_SIZE * moves.endCol, self.SQ_SIZE * moves.endRow))
 
-    def drawGameState(self, screen, gs, validMoves, sqSelected):
+    def drawGameState(self, screen, gs, validMoves, selectedSquare):
         """
         Draws the current game state on the screen.
 
@@ -101,16 +101,16 @@ class ChessGame:
         - screen: The Pygame screen object.
         - gs: The current game state.
         - validMoves: A list of valid moves.
-        - sqSelected: The selected square.
+        - selectedSquare: The selected square.
 
         Returns:
         None
         """
-        self.drawBoard(screen)
-        self.highlightSquares(screen, gs, validMoves, sqSelected)
-        self.drawPieces(screen, gs.board)
+        self.drawChessboard(screen)
+        self.highlightSquares(screen, gs, validMoves, selectedSquare)
+        self.drawChessPieces(screen, gs.board)
 
-    def animatedMoves(self, move, screen, board, clock):
+    def animateMoves(self, move, screen, board, clock):
         """
         Animates the chess piece moves on the screen.
 
@@ -129,8 +129,8 @@ class ChessGame:
         frameCount = (abs(dR) + abs(dC)) * framesPerSquare
         for frame in range(frameCount + 1):
             r, c = ((move.startRow + dR * frame / frameCount, move.startCol + dC * frame / frameCount))
-            self.drawBoard(screen)
-            self.drawPieces(screen, board)
+            self.drawChessboard(screen)
+            self.drawChessPieces(screen, board)
             color = self.colors[(move.endRow + move.endCol) % 2]
             endSquare = p.Rect(move.endCol * self.SQ_SIZE, move.endRow * self.SQ_SIZE, self.SQ_SIZE, self.SQ_SIZE)
             p.draw.rect(screen, color, endSquare)
@@ -173,12 +173,12 @@ class ChessGame:
         screen.fill(p.Color("white"))
         gs = ChessEngine.GameState()
         validMoves = gs.getValidMoves()
-        moveMade = False
-        animate = False
+        isMoveMade = False
+        shouldAnimate = False
         self.loadImages()
         running = True
-        sqSelected = ()
-        playerClicks = []
+        selectedSquare = ()
+        clickedPositions = []
         gameOver = False
         while running:
             for e in p.event.get():
@@ -189,45 +189,45 @@ class ChessGame:
                         location = p.mouse.get_pos()
                         col = location[0] // self.SQ_SIZE
                         row = location[1] // self.SQ_SIZE
-                        if sqSelected == (row, col):
-                            sqSelected = ()
-                            playerClicks = []
+                        if selectedSquare == (row, col):
+                            selectedSquare = ()
+                            clickedPositions = []
                         else:
-                            sqSelected = (row, col)
-                            playerClicks.append(sqSelected)
-                        if len(playerClicks) == 1 and (gs.board[row][col] == "--"):
-                            sqSelected = ()
-                            playerClicks = []
-                        if len(playerClicks) == 2:
-                            move = ChessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
+                            selectedSquare = (row, col)
+                            clickedPositions.append(selectedSquare)
+                        if len(clickedPositions) == 1 and (gs.board[row][col] == "--"):
+                            selectedSquare = ()
+                            clickedPositions = []
+                        if len(clickedPositions) == 2:
+                            move = ChessEngine.Move(clickedPositions[0], clickedPositions[1], gs.board)
                             for i in range(len(validMoves)):
                                 if move == validMoves[i]:
                                     gs.makeMove(move)
-                                    moveMade = True
-                                    animate = True
-                                    sqSelected = ()
-                                    playerClicks = []
-                            if not moveMade:
-                                playerClicks = [sqSelected]
+                                    isMoveMade = True
+                                    shouldAnimate = True
+                                    selectedSquare = ()
+                                    clickedPositions = []
+                            if not isMoveMade:
+                                clickedPositions = [selectedSquare]
                 elif e.type == p.KEYDOWN:
                     if e.key == p.K_z:
                         gs.undoMove()
-                        moveMade = True
-                        animate = False
+                        isMoveMade = True
+                        shouldAnimate = False
                     if e.key == p.K_r:
                         gs = ChessEngine.GameState()
                         validMoves = gs.getValidMoves()
-                        sqSelected = ()
-                        playerClicks = []
-                        moveMade = False
-                        animate = False
-            if moveMade:
-                if animate:
-                    self.animatedMoves(gs.moveLog[-1], screen, gs.board, clock)
+                        selectedSquare = ()
+                        clickedPositions = []
+                        isMoveMade = False
+                        shouldAnimate = False
+            if isMoveMade:
+                if shouldAnimate:
+                    self.animateMoves(gs.moveLog[-1], screen, gs.board, clock)
                 validMoves = gs.getValidMoves()
-                moveMade = False
-                animate = False
-            self.drawGameState(screen, gs, validMoves, sqSelected)
+                isMoveMade = False
+                shouldAnimate = False
+            self.drawGameState(screen, gs, validMoves, selectedSquare)
             if gs.checkMate:
                 gameOver = True
                 if gs.whiteToMove:

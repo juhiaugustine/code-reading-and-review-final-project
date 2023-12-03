@@ -46,10 +46,10 @@ class ChessGame:
         Returns:
         None
         """
-        for r in range(self.dimensions):
-            for c in range(self.dimensions):
-                color = self.colors[(r + c) % 2]
-                p.draw.rect(screen, color, p.Rect(c * self.sq_size, r * self.sq_size, self.sq_size, self.sq_size))
+        for row in range(self.dimensions):
+            for column in range(self.dimensions):
+                color = self.colors[(row + column) % 2]
+                p.draw.rect(screen, color, p.Rect(column * self.sq_size, row * self.sq_size, self.sq_size, self.sq_size))
 
     def draw_chess_pieces(self, screen, board):
         """
@@ -62,11 +62,11 @@ class ChessGame:
         Returns:
         None
         """
-        for r in range(self.dimensions):
-            for c in range(self.dimensions):
-                piece = board[r][c]
+        for row in range(self.dimensions):
+            for column in range(self.dimensions):
+                piece = board[row][column]
                 if piece != "--":
-                    screen.blit(self.images[piece], p.Rect(c * self.sq_size, r * self.sq_size, self.sq_size, self.sq_size))
+                    screen.blit(self.images[piece], p.Rect(column * self.sq_size, row * self.sq_size, self.sq_size, self.sq_size))
 
     def highlight_squares(self, screen, gs, valid_moves, selected_square):
         """
@@ -82,15 +82,15 @@ class ChessGame:
         None
         """
         if selected_square != ():
-            r, c = selected_square
-            if gs.board[r][c][0] == ('w' if gs.whiteToMove else 'b'):
+            row, column = selected_square
+            if gs.board[row][column][0] == ('w' if gs.whiteToMove else 'b'):
                 s = p.Surface((self.sq_size, self.sq_size))
                 s.set_alpha(100)
                 s.fill(p.Color('blue'))
-                screen.blit(s, (c * self.sq_size, r * self.sq_size))
+                screen.blit(s, (column * self.sq_size, row * self.sq_size))
                 s.fill(p.Color("yellow"))
                 for moves in valid_moves:
-                    if moves.startRow == r and moves.startCol == c:
+                    if moves.startRow == row and moves.startCol == column:
                         screen.blit(s, (self.sq_size * moves.endCol, self.sq_size * moves.endRow))
 
     def draw_game_state(self, screen, gs, valid_moves, selected_square):
@@ -123,12 +123,12 @@ class ChessGame:
         Returns:
         None
         """
-        d_r = move.endRow - move.startRow
-        d_c = move.endCol - move.startCol
+        destination_row = move.endRow - move.startRow
+        destination_col = move.endCol - move.startCol
         frames_per_square = 5
-        frame_count = (abs(d_r) + abs(d_c)) * frames_per_square
+        frame_count = (abs(destination_row) + abs(destination_col)) * frames_per_square
         for frame in range(frame_count + 1):
-            r, c = ((move.startRow + d_r * frame / frame_count, move.startCol + d_c * frame / frame_count))
+            row, column = ((move.startRow + destination_row * frame / frame_count, move.startCol + destination_col * frame / frame_count))
             self.draw_chessboard(screen)
             self.draw_chess_pieces(screen, board)
             color = self.colors[(move.endRow + move.endCol) % 2]
@@ -136,8 +136,7 @@ class ChessGame:
             p.draw.rect(screen, color, end_square)
             if move.pieceCaptured != "--":
                 screen.blit(self.images[move.pieceCaptured], end_square)
-
-            screen.blit(self.images[move.pieceMoved], p.Rect(c * self.sq_size, r * self.sq_size, self.sq_size, self.sq_size))
+            screen.blit(self.images[move.pieceMoved], p.Rect(column * self.sq_size, row * self.sq_size, self.sq_size, self.sq_size))
             p.display.flip()
             clock.tick(60)
 
@@ -181,10 +180,10 @@ class ChessGame:
         clicked_positions = []
         game_over = False
         while running:
-            for e in p.event.get():
-                if e.type == p.QUIT:
+            for event in p.event.get():
+                if event.type == p.QUIT:
                     running = False
-                elif e.type == p.MOUSEBUTTONDOWN:
+                elif event.type == p.MOUSEBUTTONDOWN:
                     if not game_over:
                         location = p.mouse.get_pos()
                         col = location[0] // self.sq_size
@@ -209,12 +208,12 @@ class ChessGame:
                                     clicked_positions = []
                             if not is_move_made:
                                 clicked_positions = [selected_square]
-                elif e.type == p.KEYDOWN:
-                    if e.key == p.K_z:
+                elif event.type == p.KEYDOWN:
+                    if event.key == p.K_z:
                         gs.undoMove()
                         is_move_made = True
                         should_animate = False
-                    if e.key == p.K_r:
+                    if event.key == p.K_r:
                         gs = ChessEngine.GameState()
                         valid_moves = gs.getValidMoves()
                         selected_square = ()

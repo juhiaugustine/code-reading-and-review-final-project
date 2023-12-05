@@ -139,7 +139,10 @@ class GameState:
         self.white_to_move = not self.white_to_move
         opp_moves = self.get_all_possible_moves()
         self.white_to_move = not self.white_to_move
-        return any(np.all([move.end_row == row, move.end_col == col]) for move in opp_moves)
+        for move in opp_moves:
+            if move.end_row == row and move.end_col == col:
+                return True
+        return False
 
     def get_all_possible_moves(self):
         """
